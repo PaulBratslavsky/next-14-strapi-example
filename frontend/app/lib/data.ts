@@ -128,8 +128,6 @@ export async function fetchFilteredInvoices(
 ) {
   noStore();
 
-  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
   const queryObject = qs.stringify({
     sort: ["date:asc"],
     populate: {
@@ -212,6 +210,19 @@ export async function fetchInvoicesPages(query: string) {
   }
 }
 
+export async function fetchCustomers() {
+  try {
+    const data = await fetch("http://localhost:1337/api/customers");
+    const customers = await data.json();
+    const flatten = flattenAttributes(customers.data);
+    return flatten;
+  } catch (err) {
+    console.error("Database Error:", err);
+    throw new Error("Failed to fetch all customers.");
+  }
+}
+
+
 export async function fetchInvoiceById(id: string) {
   try {
     const data = await sql<InvoiceForm>`
@@ -237,23 +248,6 @@ export async function fetchInvoiceById(id: string) {
   }
 }
 
-export async function fetchCustomers() {
-  try {
-    const data = await sql<CustomerField>`
-      SELECT
-        id,
-        name
-      FROM customers
-      ORDER BY name ASC
-    `;
-
-    const customers = data.rows;
-    return customers;
-  } catch (err) {
-    console.error("Database Error:", err);
-    throw new Error("Failed to fetch all customers.");
-  }
-}
 
 export async function fetchFilteredCustomers(query: string) {
   try {

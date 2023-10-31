@@ -4,7 +4,6 @@ import InvoiceStatus from "@/app/ui/invoices/status";
 import { formatDateToLocal, formatCurrency } from "@/app/lib/utils";
 
 export default async function InvoicesTable({
-  currentPage,
   invoices,
 }: {
   currentPage: number;
