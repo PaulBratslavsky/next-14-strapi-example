@@ -2,15 +2,13 @@ import { sql } from "@vercel/postgres";
 import { unstable_noStore as noStore } from "next/cache";
 import qs from "qs";
 import { flattenAttributes } from "@/app/lib/utils";
+import { formatCurrency } from "./utils";
 
 import {
-  CustomerField,
   CustomersTable,
-  InvoiceForm,
-  InvoicesTable,
   User,
 } from "./definitions";
-import { formatCurrency } from "./utils";
+
 
 export async function fetchRevenue() {
   await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -64,7 +62,6 @@ export async function fetchLatestInvoices() {
       }
     );
     const data = await response.json();
-    console.log(data);
     const flattened = flattenAttributes(data.data);
 
     const latestInvoices = flattened.map((invoice: any) => ({
@@ -180,12 +177,52 @@ export async function fetchFilteredInvoices(
     );
     const data = await response.json();
     const flattened = flattenAttributes(data.data);
-
-
     return { data: flattened, meta: data.meta };
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch invoices.");
+  }
+}
+
+
+export async function fetchCustomers() {
+  const query = qs.stringify({
+    populate: {
+      fields: ["id", "name"],
+    }, 
+  });
+  try {
+    const data = await fetch("http://localhost:1337/api/customers?" + query);
+    const customers = await data.json();
+    const flatten = flattenAttributes(customers.data);
+    return flatten;
+  } catch (err) {
+    console.error("Database Error:", err);
+    throw new Error("Failed to fetch all customers.");
+  }
+}
+
+export async function fetchInvoiceById(id: string) {
+  const query = qs.stringify({
+    populate: {
+      customer: {
+        populate: {
+          image: {
+            fields: ["url"],
+          },
+        },
+      },
+    },
+  });
+
+  try {
+    const data = await fetch("http://localhost:1337/api/invoices/" + id + "?" + query);
+    const invoice = await data.json();
+    const flatten = flattenAttributes(invoice.data);
+    return flatten;
+  } catch (err) {
+    console.error("Database Error:", err);
+    throw new Error("Failed to fetch all customers.");
   }
 }
 
@@ -209,45 +246,6 @@ export async function fetchInvoicesPages(query: string) {
     throw new Error("Failed to fetch total number of invoices.");
   }
 }
-
-export async function fetchCustomers() {
-  try {
-    const data = await fetch("http://localhost:1337/api/customers");
-    const customers = await data.json();
-    const flatten = flattenAttributes(customers.data);
-    return flatten;
-  } catch (err) {
-    console.error("Database Error:", err);
-    throw new Error("Failed to fetch all customers.");
-  }
-}
-
-
-export async function fetchInvoiceById(id: string) {
-  try {
-    const data = await sql<InvoiceForm>`
-      SELECT
-        invoices.id,
-        invoices.customer_id,
-        invoices.amount,
-        invoices.status
-      FROM invoices
-      WHERE invoices.id = ${id};
-    `;
-
-    const invoice = data.rows.map((invoice) => ({
-      ...invoice,
-      // Convert amount from cents to dollars
-      amount: invoice.amount / 100,
-    }));
-
-    return invoice[0];
-  } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch invoice.");
-  }
-}
-
 
 export async function fetchFilteredCustomers(query: string) {
   try {

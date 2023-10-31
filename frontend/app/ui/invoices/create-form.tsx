@@ -2,6 +2,7 @@
 import { createInvoice } from "@/app/lib/actions";
 import { CustomerField } from "@/app/lib/definitions";
 import { useRouter } from "next/navigation";
+import { useFormState } from "react-dom";
 import Link from "next/link";
 import {
   CheckIcon,
@@ -10,7 +11,6 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "../button";
-import { useFormState } from "react-dom";
 
 export default function Form({ customers }: { customers: CustomerField[] }) {
   const router = useRouter();

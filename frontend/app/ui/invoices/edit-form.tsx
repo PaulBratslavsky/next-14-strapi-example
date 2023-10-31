@@ -1,14 +1,16 @@
-'use client';
-
-import { CustomerField, InvoiceForm } from '@/app/lib/definitions';
+"use client";
+import { CustomerField, InvoiceForm } from "@/app/lib/definitions";
+import { updateInvoice } from "@/app/lib/actions";
+import { useRouter } from "next/navigation";
+import { useFormState } from "react-dom";
 import {
   CheckIcon,
   ClockIcon,
   CurrencyDollarIcon,
   UserCircleIcon,
-} from '@heroicons/react/24/outline';
-import Link from 'next/link';
-import { Button } from '../button';
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { Button } from "../button";
 
 export default function EditInvoiceForm({
   invoice,
@@ -17,8 +19,12 @@ export default function EditInvoiceForm({
   invoice: InvoiceForm;
   customers: CustomerField[];
 }) {
+  const router = useRouter();
+  const [state, formAction] = useFormState(updateInvoice, {});
+  if (state.ok && state.data) return router.push("/dashboard/invoices");
+
   return (
-    <form>
+    <form action={formAction}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Invoice ID */}
         <input type="hidden" name="id" value={invoice.id} />
@@ -32,7 +38,7 @@ export default function EditInvoiceForm({
               id="customer"
               name="customerId"
               className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
-              defaultValue={invoice.customer_id}
+              defaultValue={invoice.customer.id}
             >
               <option value="" disabled>
                 Select a customer
@@ -80,7 +86,7 @@ export default function EditInvoiceForm({
                   name="status"
                   type="radio"
                   value="pending"
-                  defaultChecked={invoice.status === 'pending'}
+                  defaultChecked={invoice.status === "pending"}
                   className="h-4 w-4 border-gray-300 bg-gray-100 text-gray-600 focus:ring-2 focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-gray-600"
                 />
                 <label
@@ -96,7 +102,7 @@ export default function EditInvoiceForm({
                   name="status"
                   type="radio"
                   value="paid"
-                  defaultChecked={invoice.status === 'paid'}
+                  defaultChecked={invoice.status === "paid"}
                   className="h-4 w-4 border-gray-300 bg-gray-100 text-gray-600 focus:ring-2 focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-gray-600"
                 />
                 <label
