@@ -1,4 +1,6 @@
 "use server";
+const STRAPI_URL = process.env.STRAPI_URL;
+import { cookies } from "next/headers";
 
 export type State = {
   errors?: {
@@ -29,6 +31,9 @@ const InvoiceSchema = z.object({
 
 const CreateInvoice = InvoiceSchema.omit({ id: true, date: true });
 export async function createInvoice(prevState: State, formData: FormData) {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) throw new Error("Not Authorized.");
+
   const validatedFields = CreateInvoice.safeParse({
     customerId: formData.get("customerId"),
     amount: formData.get("amount"),
@@ -38,15 +43,15 @@ export async function createInvoice(prevState: State, formData: FormData) {
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Invoice.',
+      message: "Missing Fields. Failed to Create Invoice.",
     };
   }
 
   // Prepare data for insertion into the database
   const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
-  const date = new Date().toISOString().split('T')[0];
-  
+  const date = new Date().toISOString().split("T")[0];
+
   const dataToSend = {
     data: {
       amount: amountInCents,
@@ -59,11 +64,12 @@ export async function createInvoice(prevState: State, formData: FormData) {
   };
 
   try {
-    const response = await fetch("http://localhost:1337/api/invoices", {
+    const response = await fetch(STRAPI_URL + "/api/invoices", {
       method: "POST",
       body: JSON.stringify(dataToSend),
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer " + authToken,
       },
     });
     const data = await response.json();
@@ -80,6 +86,9 @@ export async function createInvoice(prevState: State, formData: FormData) {
 
 const UpdateInvoice = InvoiceSchema.omit({ date: true });
 export async function updateInvoice(formData: FormData) {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) throw new Error("Not Authorized.");
+
   const { customerId, amount, status, id } = UpdateInvoice.parse({
     customerId: formData.get("customerId"),
     amount: formData.get("amount"),
@@ -103,11 +112,12 @@ export async function updateInvoice(formData: FormData) {
   };
 
   try {
-    const response = await fetch("http://localhost:1337/api/invoices/" + id, {
+    const response = await fetch(STRAPI_URL + "/api/invoices/" + id, {
       method: "PUT",
       body: JSON.stringify(dataToSend),
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer " + authToken,
       },
     });
     const data = await response.json();
@@ -123,9 +133,15 @@ export async function updateInvoice(formData: FormData) {
 }
 
 export async function deleteInvoice(id: string) {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) throw new Error("Not Authorized.");
+
   try {
-    const response = await fetch("http://localhost:1337/api/invoices/" + id, {
+    const response = await fetch(STRAPI_URL + "/api/invoices/" + id, {
       method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + authToken,
+      },
     });
     const data = await response.json();
     if (!response.ok)
@@ -137,4 +153,3 @@ export async function deleteInvoice(id: string) {
   }
   revalidatePath("/dashboard/invoices");
 }
-

@@ -1,16 +1,16 @@
-import { sql } from "@vercel/postgres";
 import { unstable_noStore as noStore } from "next/cache";
 import qs from "qs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { flattenAttributes } from "@/app/lib/utils";
 import { formatCurrency } from "./utils";
 
-import {
-  CustomersTable,
-  User,
-} from "./definitions";
-
+const STRAPI_URL = process.env.STRAPI_URL;
 
 export async function fetchRevenue() {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) return redirect("/login");
+
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   try {
@@ -21,12 +21,10 @@ export async function fetchRevenue() {
         page: 1,
       },
     });
-    const response = await fetch(
-      "http://localhost:1337/api/revenues?" + query,
-      {
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(STRAPI_URL + "/api/revenues?" + query, {
+      headers: { Authorization: "Bearer " + authToken },
+      cache: "no-store",
+    });
     const data = await response.json();
     const revenue = flattenAttributes(data.data);
     return revenue;
@@ -37,6 +35,9 @@ export async function fetchRevenue() {
 }
 
 export async function fetchLatestInvoices() {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) return redirect("/login");
+
   const query = qs.stringify({
     sort: ["date:asc"],
     populate: {
@@ -55,12 +56,10 @@ export async function fetchLatestInvoices() {
   });
 
   try {
-    const response = await fetch(
-      "http://localhost:1337/api/invoices?" + query,
-      {
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(STRAPI_URL + "/api/invoices?" + query, {
+      headers: { Authorization: "Bearer " + authToken },
+      cache: "no-store",
+    });
     const data = await response.json();
     const flattened = flattenAttributes(data.data);
 
@@ -77,20 +76,35 @@ export async function fetchLatestInvoices() {
 }
 
 export async function fetchCardData() {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) return redirect("/login");
+
   noStore();
 
   try {
     const totalPendingInvoicesPromise = await fetch(
-      "http://localhost:1337/api/invoices-status/pending"
+      STRAPI_URL + "/api/invoices-status/pending",
+      {
+        headers: { Authorization: "Bearer " + authToken },
+      }
     );
     const totalPaidInvoicesPromise = await fetch(
-      "http://localhost:1337/api/invoices-status/paid"
+      STRAPI_URL + "/api/invoices-status/paid",
+      {
+        headers: { Authorization: "Bearer " + authToken },
+      }
     );
     const numberOfCustomerPromise = await fetch(
-      "http://localhost:1337/api/total-customers"
+      STRAPI_URL + "/api/total-customers",
+      {
+        headers: { Authorization: "Bearer " + authToken },
+      }
     );
     const numberOfInvoicesPromise = await fetch(
-      "http://localhost:1337/api/invoices-status/total"
+      STRAPI_URL + "/api/invoices-status/total",
+      {
+        headers: { Authorization: "Bearer " + authToken },
+      }
     );
 
     const data = await Promise.all([
@@ -123,6 +137,9 @@ export async function fetchFilteredInvoices(
   query: string,
   currentPage: number
 ) {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) return redirect("/login");
+
   noStore();
 
   const queryObject = qs.stringify({
@@ -172,9 +189,9 @@ export async function fetchFilteredInvoices(
   });
 
   try {
-    const response = await fetch(
-      "http://localhost:1337/api/invoices?" + queryObject
-    );
+    const response = await fetch(STRAPI_URL + "/api/invoices?" + queryObject, {
+      headers: { Authorization: "Bearer " + authToken },
+    });
     const data = await response.json();
     const flattened = flattenAttributes(data.data);
     return { data: flattened, meta: data.meta };
@@ -184,15 +201,19 @@ export async function fetchFilteredInvoices(
   }
 }
 
-
 export async function fetchCustomers() {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) return redirect("/login");
+
   const query = qs.stringify({
     populate: {
       fields: ["id", "name"],
-    }, 
+    },
   });
   try {
-    const data = await fetch("http://localhost:1337/api/customers?" + query);
+    const data = await fetch(STRAPI_URL + "/api/customers?" + query, {
+      headers: { Authorization: "Bearer " + authToken },
+    });
     const customers = await data.json();
     const flatten = flattenAttributes(customers.data);
     return flatten;
@@ -203,6 +224,9 @@ export async function fetchCustomers() {
 }
 
 export async function fetchInvoiceById(id: string) {
+  const authToken = cookies().get("jwt")?.value;
+  if (!authToken) return redirect("/login");
+
   const query = qs.stringify({
     populate: {
       customer: {
@@ -216,7 +240,9 @@ export async function fetchInvoiceById(id: string) {
   });
 
   try {
-    const data = await fetch("http://localhost:1337/api/invoices/" + id + "?" + query);
+    const data = await fetch(STRAPI_URL + "/api/invoices/" + id + "?" + query, {
+      headers: { Authorization: "Bearer " + authToken },
+    });
     const invoice = await data.json();
     const flatten = flattenAttributes(invoice.data);
     return flatten;
@@ -225,26 +251,3 @@ export async function fetchInvoiceById(id: string) {
     throw new Error("Failed to fetch all customers.");
   }
 }
-
-export async function fetchInvoicesPages(query: string) {
-  try {
-    const count = await sql`SELECT COUNT(*)
-    FROM invoices
-    JOIN customers ON invoices.customer_id = customers.id
-    WHERE
-      customers.name ILIKE ${`%${query}%`} OR
-      customers.email ILIKE ${`%${query}%`} OR
-      invoices.amount::text ILIKE ${`%${query}%`} OR
-      invoices.date::text ILIKE ${`%${query}%`} OR
-      invoices.status ILIKE ${`%${query}%`}
-  `;
-
-    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
-    return totalPages;
-  } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch total number of invoices.");
-  }
-}
-
-
