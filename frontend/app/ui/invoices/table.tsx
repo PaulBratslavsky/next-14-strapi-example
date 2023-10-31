@@ -87,7 +87,7 @@ export default async function InvoicesTable({
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex items-center gap-3">
                       <Image
-                         src={
+                        src={
                           "http://localhost:1337" + invoice.customer.image.url
                         }
                         className="rounded-full"
