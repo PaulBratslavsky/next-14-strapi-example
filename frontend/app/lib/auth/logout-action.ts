@@ -1,9 +1,9 @@
 "use server";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
-const logoutAction = async () => {
+export async function logoutAction() {
   cookies().delete("jwt");
-  return { ok: true };
+  redirect("/");
 };
 
-export default logoutAction;

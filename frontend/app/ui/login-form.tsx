@@ -1,18 +1,19 @@
-'use client';
+"use client";
 import { useFormState } from "react-dom";
-import loginAction from "@/app/lib/auth/login-action";
-import { lusitana } from '@/app/ui/fonts';
+import { loginAction } from "@/app/lib/auth/login-action";
+import { lusitana } from "@/app/ui/fonts";
 import {
   AtSymbolIcon,
   KeyIcon,
   ExclamationCircleIcon,
-} from '@heroicons/react/24/outline';
-import { ArrowRightIcon } from '@heroicons/react/20/solid';
-import { Button } from './button';
+} from "@heroicons/react/24/outline";
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import { Button } from "./button";
 
 export default function LoginForm() {
-  const initialState = { message: null, errors: {} };
+  const initialState = {};
   const [state, dispatch] = useFormState(loginAction, initialState);
+  console.dir(state, { depth: null });
   return (
     <form className="space-y-3" action={dispatch}>
       <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
@@ -31,13 +32,23 @@ export default function LoginForm() {
               <input
                 className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
                 id="identifier"
-                type="email"
+                type="text"
                 name="identifier"
-                placeholder="Enter your email address"
-                required
+                placeholder="Enter your email or username"
               />
               <AtSymbolIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
             </div>
+            {state?.errors?.identifier ? (
+              <div
+                id="customer-error"
+                aria-live="polite"
+                className="mt-2 text-sm text-red-500"
+              >
+                {state.errors.identifier.map((error: string) => (
+                  <p key={error}>{error}</p>
+                ))}
+              </div>
+            ) : null}
           </div>
           <div className="mt-4">
             <label
@@ -53,16 +64,34 @@ export default function LoginForm() {
                 type="password"
                 name="password"
                 placeholder="Enter password"
-                required
                 minLength={6}
               />
               <KeyIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
             </div>
           </div>
+          {state?.errors?.password ? (
+            <div
+              id="customer-error"
+              aria-live="polite"
+              className="mt-2 text-sm text-red-500"
+            >
+              {state.errors.password.map((error: string) => (
+                <p key={error}>{error}</p>
+              ))}
+            </div>
+          ) : null}
         </div>
         <LoginButton />
         <div className="flex h-8 items-end space-x-1">
-          {/* Add form errors here */}
+          {state?.message ? (
+            <div
+              id="customer-error"
+              aria-live="polite"
+              className="mt-2 text-sm text-red-500"
+            >
+              <p>{state.message}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </form>
