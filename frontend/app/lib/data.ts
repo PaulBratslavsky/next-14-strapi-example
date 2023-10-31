@@ -1,5 +1,5 @@
 import { sql } from "@vercel/postgres";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 import qs from "qs";
 import { flattenAttributes } from "@/app/lib/utils";
 
@@ -64,9 +64,8 @@ export async function fetchLatestInvoices() {
       }
     );
     const data = await response.json();
+    console.log(data);
     const flattened = flattenAttributes(data.data);
-
-    console.log(flattened);
 
     const latestInvoices = flattened.map((invoice: any) => ({
       ...invoice,
@@ -127,31 +126,65 @@ export async function fetchFilteredInvoices(
   query: string,
   currentPage: number
 ) {
+  noStore();
+
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
-  try {
-    const invoices = await sql<InvoicesTable>`
-      SELECT
-        invoices.id,
-        invoices.amount,
-        invoices.date,
-        invoices.status,
-        customers.name,
-        customers.email,
-        customers.image_url
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      WHERE
-        customers.name ILIKE ${`%${query}%`} OR
-        customers.email ILIKE ${`%${query}%`} OR
-        invoices.amount::text ILIKE ${`%${query}%`} OR
-        invoices.date::text ILIKE ${`%${query}%`} OR
-        invoices.status ILIKE ${`%${query}%`}
-      ORDER BY invoices.date DESC
-      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-    `;
+  const queryObject = qs.stringify({
+    sort: ["date:asc"],
+    populate: {
+      customer: {
+        populate: {
+          image: {
+            fields: ["url"],
+          },
+        },
+      },
+    },
 
-    return invoices.rows;
+    pagination: {
+      pageSize: ITEMS_PER_PAGE,
+      page: currentPage,
+    },
+    filters: {
+      $or: [
+        {
+          status: {
+            $contains: query,
+          },
+        },
+        {
+          amount: {
+            $contains: query,
+          },
+        },
+        {
+          customer: {
+            name: {
+              $contains: query,
+            },
+          },
+        },
+        {
+          customer: {
+            email: {
+              $contains: query,
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  try {
+    const response = await fetch(
+      "http://localhost:1337/api/invoices?" + queryObject
+    );
+    const data = await response.json();
+    const flattened = flattenAttributes(data.data);
+
+
+    return { data: flattened, meta: data.meta };
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch invoices.");
