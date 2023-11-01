@@ -11,7 +11,9 @@ const formSchema = z.object({
 });
 
 export async function loginAction(prevState: any, formData: any) {
-  const url = `${process.env.STRAPI_URL}/api/auth/local`;
+  const STRAPI_URL = process.env.STRAPI_URL;
+  if (!STRAPI_URL) throw new Error("Missing STRAPI_URL environment variable.");
+  const url = `${STRAPI_URL}/api/auth/local`;
 
   const validatedFields = formSchema.safeParse({
     identifier: formData.get("identifier"),

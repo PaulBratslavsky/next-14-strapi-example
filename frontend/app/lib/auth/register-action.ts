@@ -1,4 +1,3 @@
-
 "use server";
 
 import { z } from "zod";
@@ -12,7 +11,9 @@ const formSchema = z.object({
 });
 
 export async function registerAction(prevState: any, formData: any) {
-  const url = `${process.env.STRAPI_URL}/api/auth/local/register`;
+  const STRAPI_URL = process.env.STRAPI_URL;
+  if (!STRAPI_URL) throw new Error("Missing STRAPI_URL environment variable.");
+  const url = `${STRAPI_URL}/api/auth/local/register`;
 
   const validatedFields = formSchema.safeParse({
     username: formData.get("username"),
@@ -40,7 +41,8 @@ export async function registerAction(prevState: any, formData: any) {
     });
 
     const data = await response.json();
-    if (!response.ok && data.error) return { ...prevState, message: data.error.message, errors: null };
+    if (!response.ok && data.error)
+      return { ...prevState, message: data.error.message, errors: null };
     if (response.ok && data.jwt) cookies().set("jwt", data.jwt);
   } catch (error) {
     console.log(error);
