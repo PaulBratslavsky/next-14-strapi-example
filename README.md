@@ -65,7 +65,19 @@ Check out this [page](https://nextjs.org/learn?utm_source=next-site&utm_medium=h
   STRAPI_URL=http://localhost:1337
 ```
 
-4. Next, navigate to your `/backend` and start your project by running the following command:
+3. Next, navigate to your `/backend` directory and set up your `.env` file. You can use the `.env.example` file as reference:
+
+```bash
+HOST=localhost
+PORT=1337
+APP_KEYS="toBeModified1,toBeModified2"
+API_TOKEN_SALT=tobemodified
+ADMIN_JWT_SECRET=tobemodified
+JWT_SECRET=tobemodified
+TRANSFER_TOKEN_SALT=tobemodified
+```
+
+5. Next, navigate to your `/backend` and start your project by running the following command:
 
 ```bash
   yarn build
