@@ -2,7 +2,7 @@
 import { useFormState } from "react-dom";
 import { registerAction } from "@/app/lib/auth/register-action";
 import { lusitana } from "@/app/ui/fonts";
-import { AtSymbolIcon, KeyIcon } from "@heroicons/react/24/outline";
+import { AtSymbolIcon, KeyIcon, UserIcon } from "@heroicons/react/24/outline";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import { Button } from "./button";
 import Link from "next/link";
@@ -32,7 +32,7 @@ export default function RegisterForm() {
                 name="username"
                 placeholder="Enter your email or username"
               />
-              <AtSymbolIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
+              <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
             </div>
             {state?.errors?.username ? (
               <div
