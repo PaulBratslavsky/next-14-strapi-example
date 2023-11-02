@@ -1,5 +1,7 @@
 # Next 14 and Strapi Dashboard Example.
 
+![next-dash](https://github.com/PaulBratslavsky/next-14-strapi-example/assets/6153188/753f954e-ba6a-4d21-a819-cd420b96f60d)
+
 This project is based on this [Next 14 Tutorial](https://nextjs.org/learn?utm_source=next-site&utm_medium=homepage-cta&utm_campaign=home), but instead, we are using Strapi to power our Next JS Frontend.
 
 Covering all the new features of Next 14
